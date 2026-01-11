@@ -3,6 +3,7 @@ package com.example.order_event_service.service;
 import com.example.order_event_service.dto.OrderRequestDto;
 import com.example.order_event_service.entity.OrderEvent;
 import com.example.order_event_service.mapper.OrderEventMapper;
+import com.example.order_event_service.notification.EmailNotificationService;
 import com.example.order_event_service.repository.OrderEventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +17,14 @@ public class OrderEventService {
 
     private final OrderEventRepository repository;
     private final OrderEventMapper mapper;
+    private final EmailNotificationService emailNotificationService;
 
     public OrderEventService(OrderEventRepository repository,
-                             OrderEventMapper mapper) {
+                             OrderEventMapper mapper,
+                             EmailNotificationService emailNotificationService) {
         this.repository = repository;
         this.mapper = mapper;
+        this.emailNotificationService = emailNotificationService;
     }
 
     public void processOrderEvent(OrderRequestDto request) {
@@ -32,8 +36,10 @@ public class OrderEventService {
         OrderEvent event = mapper.toEntity(request);
         repository.save(event);
 
+        emailNotificationService.sendOrderEventNotification(event);
+
         log.info(
-                "Order event persisted [shipmentNumber={}]",
+                "Order event processed successfully [shipmentNumber={}]",
                 event.getShipmentNumber()
         );
     }
