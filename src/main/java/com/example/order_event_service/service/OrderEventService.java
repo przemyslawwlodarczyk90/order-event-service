@@ -36,7 +36,7 @@ public class OrderEventService {
         OrderEvent event = mapper.toEntity(request);
         repository.save(event);
 
-        emailNotificationService.sendOrderEventNotification(event);
+        emailNotificationService.sendOrderAcceptanceConfirmation(event);
 
         log.info(
                 "Order event processed successfully [shipmentNumber={}]",
