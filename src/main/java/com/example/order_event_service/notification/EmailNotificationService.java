@@ -70,4 +70,60 @@ public class EmailNotificationService {
                 event.getStatusCode()
         );
     }
-}
+
+
+    /**
+     * Mock notification email sent when order is packed and shipped.
+     * Simulates business notification without real email delivery.
+     */
+    public void sendOrderPackedAndShippedNotification(OrderEvent event) {
+
+        // LOG 1 – informacja biznesowa + adresat
+        log.info(
+                "Order packed and shipped notification sent to recipient [email={}, shipmentNumber={}]",
+                event.getRecipientEmail(),
+                event.getShipmentNumber()
+        );
+
+        // LOG 2 – identyfikacja zamówienia + nowy status
+        log.info(
+                "Order status change details [shipmentNumber={}, newStatusCode={}]",
+                event.getShipmentNumber(),
+                event.getStatusCode()
+        );
+
+        // LOG 3 – audyt czasowy
+        log.info(
+                "Order status updated at [{}]",
+                event.getReceivedAt()
+                        .atZone(ZoneId.systemDefault())
+                        .format(DATE_TIME_FORMATTER)
+        );
+
+        // LOG 4 – treść mock maila (pełny kontekst)
+        log.info(
+                """
+                Email content (MOCK):
+                ----------------------------------------
+                To: {}
+    
+                Dear Customer,
+    
+                Your order with number {} has been packed and shipped.
+    
+                Sender country code: {}
+                Recipient country code: {}
+                Current order status: {}
+    
+                You will be informed once the package is out for delivery.
+    
+                Thank you for choosing our service.
+                ----------------------------------------
+                """,
+                event.getRecipientEmail(),
+                event.getShipmentNumber(),
+                event.getSenderCountryCode(),
+                event.getRecipientCountryCode(),
+                event.getStatusCode()
+        );
+}}

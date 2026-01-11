@@ -31,7 +31,9 @@ public class OrderRequestDto {
 
     @Min(0)
     @Max(100)
-    @Schema(example = "99")
+    @Schema(example = "10")      //  przykładowe OrderStatus.ORDER_ACCEPTED na potrzeby podpowiedzi swaggera i nowego zdarzenia ,
+    //  możemy założyć że przychodzące zamówienie będzie mieć dopuszczalnych więcej statusów niż ten jeden
+    // temat jest otwarty
     private int statusCode;
 
 
