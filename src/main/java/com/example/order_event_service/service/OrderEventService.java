@@ -31,11 +31,45 @@ public class OrderEventService {
     }
 
     public void processOrderEvent(OrderRequestDto request) {
+
+        String shipmentNumber = request.getShipmentNumber();
+        int statusCode = request.getStatusCode();
+
         log.info(
-                "Processing order event [shipmentNumber={}]",
-                request.getShipmentNumber()
+                "Processing order event [shipmentNumber={}, statusCode={}]",
+                shipmentNumber,
+                statusCode
         );
 
+        // 1️⃣ Czy event już istnieje?
+        repository.findByShipmentNumber(shipmentNumber)
+                .ifPresent(existing -> {
+                    log.warn(
+                            "Duplicate order event blocked [shipmentNumber={}, existingStatusCode={}]",
+                            shipmentNumber,
+                            existing.getStatusCode()
+                    );
+                    throw new InvalidOrderStatusTransitionException(
+                            "Order event already exists for shipmentNumber=" + shipmentNumber
+                    );
+                });
+
+        // 2️⃣ Walidacja niedozwolonych statusów początkowych
+        if (statusCode == OrderStatus.PACKED_AND_SHIPPED.getCode()
+                || statusCode == OrderStatus.OUT_FOR_DELIVERY.getCode()) {
+
+            log.warn(
+                    "Invalid initial order status blocked [shipmentNumber={}, statusCode={}]",
+                    shipmentNumber,
+                    statusCode
+            );
+
+            throw new InvalidOrderStatusTransitionException(
+                    "Initial order event cannot have shipment-related status"
+            );
+        }
+
+        // 3️⃣ Normalne przetwarzanie
         OrderEvent event = mapper.toEntity(request);
         repository.save(event);
 
@@ -43,19 +77,12 @@ public class OrderEventService {
 
         log.info(
                 "Order event processed successfully [shipmentNumber={}]",
-                event.getShipmentNumber()
+                shipmentNumber
         );
     }
 
     @Transactional
     public void markOrderAsPackedAndShipped(String shipmentNumber) {
-
-        log.info(
-                "Processing order status change [shipmentNumber={}, newStatus={}, code={}]",
-                shipmentNumber,
-                OrderStatus.PACKED_AND_SHIPPED,
-                OrderStatus.PACKED_AND_SHIPPED.getCode()
-        );
 
         OrderEvent event = repository.findByShipmentNumber(shipmentNumber)
                 .orElseThrow(() ->
@@ -66,16 +93,17 @@ public class OrderEventService {
 
         int previousStatus = event.getStatusCode();
 
+        // 1️⃣ Czy status już jest docelowy?
         if (previousStatus == OrderStatus.PACKED_AND_SHIPPED.getCode()) {
             log.info(
-                    "Order already in target status [shipmentNumber={}, status={}, code={}]",
+                    "Order already in target status [shipmentNumber={}, statusCode={}]",
                     shipmentNumber,
-                    OrderStatus.PACKED_AND_SHIPPED,
                     previousStatus
             );
             return;
         }
 
+        // 2️⃣ Brak dodatkowych ograniczeń – przejście dozwolone
         event.setStatusCode(OrderStatus.PACKED_AND_SHIPPED.getCode());
         repository.save(event);
 
@@ -93,13 +121,6 @@ public class OrderEventService {
     @Transactional
     public void markOrderAsOutForDelivery(String shipmentNumber) {
 
-        log.info(
-                "Processing order status change [shipmentNumber={}, newStatus={}, code={}]",
-                shipmentNumber,
-                OrderStatus.OUT_FOR_DELIVERY,
-                OrderStatus.OUT_FOR_DELIVERY.getCode()
-        );
-
         OrderEvent event = repository.findByShipmentNumber(shipmentNumber)
                 .orElseThrow(() ->
                         new InvalidOrderStatusTransitionException(
@@ -109,6 +130,7 @@ public class OrderEventService {
 
         int previousStatus = event.getStatusCode();
 
+        // 1️⃣ Czy zamówienie jest w wymaganym stanie poprzednim?
         if (previousStatus != OrderStatus.PACKED_AND_SHIPPED.getCode()) {
             log.warn(
                     "Invalid order status transition blocked [shipmentNumber={}, currentStatusCode={}, requiredStatusCode={}]",
@@ -121,6 +143,7 @@ public class OrderEventService {
             );
         }
 
+        // 2️⃣ Przejście dozwolone – zmiana statusu
         event.setStatusCode(OrderStatus.OUT_FOR_DELIVERY.getCode());
         repository.save(event);
 
@@ -133,5 +156,4 @@ public class OrderEventService {
                 event.getStatusCode(),
                 OrderStatus.OUT_FOR_DELIVERY
         );
-    }
-}
+    }}
