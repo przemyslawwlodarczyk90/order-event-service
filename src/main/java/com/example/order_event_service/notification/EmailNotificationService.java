@@ -45,7 +45,7 @@ public class EmailNotificationService {
                         .format(DATE_TIME_FORMATTER)
         );
 
-        // LOG 4 – treść mock maila (pełny kontekst)
+        // LOG 4 – treść mock maila
         log.info(
                 """
                 Email content (MOCK):
@@ -70,7 +70,6 @@ public class EmailNotificationService {
                 event.getStatusCode()
         );
     }
-
 
     /**
      * Mock notification email sent when order is packed and shipped.
@@ -100,23 +99,23 @@ public class EmailNotificationService {
                         .format(DATE_TIME_FORMATTER)
         );
 
-        // LOG 4 – treść mock maila (pełny kontekst)
+        // LOG 4 – treść mock maila
         log.info(
                 """
                 Email content (MOCK):
                 ----------------------------------------
                 To: {}
-    
+
                 Dear Customer,
-    
+
                 Your order with number {} has been packed and shipped.
-    
+
                 Sender country code: {}
                 Recipient country code: {}
                 Current order status: {}
-    
+
                 You will be informed once the package is out for delivery.
-    
+
                 Thank you for choosing our service.
                 ----------------------------------------
                 """,
@@ -126,4 +125,61 @@ public class EmailNotificationService {
                 event.getRecipientCountryCode(),
                 event.getStatusCode()
         );
-}}
+    }
+
+    /**
+     * Mock notification email sent when order is out for delivery.
+     * Simulates business notification without real email delivery.
+     */
+    public void sendOrderOutForDeliveryNotification(OrderEvent event) {
+
+        // LOG 1 – informacja biznesowa + adresat
+        log.info(
+                "Order out for delivery notification sent to recipient [email={}, shipmentNumber={}]",
+                event.getRecipientEmail(),
+                event.getShipmentNumber()
+        );
+
+        // LOG 2 – identyfikacja zamówienia + nowy status
+        log.info(
+                "Order status change details [shipmentNumber={}, newStatusCode={}]",
+                event.getShipmentNumber(),
+                event.getStatusCode()
+        );
+
+        // LOG 3 – audyt czasowy
+        log.info(
+                "Order status updated at [{}]",
+                event.getReceivedAt()
+                        .atZone(ZoneId.systemDefault())
+                        .format(DATE_TIME_FORMATTER)
+        );
+
+        // LOG 4 – treść mock maila
+        log.info(
+                """
+                Email content (MOCK):
+                ----------------------------------------
+                To: {}
+
+                Dear Customer,
+
+                Your order with number {} is now out for delivery.
+
+                Sender country code: {}
+                Recipient country code: {}
+                Current order status: {}
+
+                Please be ready to receive your package.
+
+                Thank you for choosing our service.
+                ----------------------------------------
+                """,
+                event.getRecipientEmail(),
+                event.getShipmentNumber(),
+                event.getSenderCountryCode(),
+                event.getRecipientCountryCode(),
+                event.getStatusCode()
+        );
+    }
+}

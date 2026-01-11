@@ -32,6 +32,21 @@ public class OrderStatusUpdateController {
 
         service.markOrderAsPackedAndShipped(shipmentNumber);
 
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.noContent().build(); // ✅ 204
+    }
+
+    @PatchMapping("/{shipmentNumber}/status/out-for-delivery")
+    public ResponseEntity<Void> markOrderAsOutForDelivery(
+            @PathVariable String shipmentNumber
+    ) {
+        log.info(
+                "Received order status update request [shipmentNumber={}, status={}]",
+                shipmentNumber,
+                OrderStatus.OUT_FOR_DELIVERY
+        );
+
+        service.markOrderAsOutForDelivery(shipmentNumber);
+
+        return ResponseEntity.noContent().build(); // ✅ 204
     }
 }

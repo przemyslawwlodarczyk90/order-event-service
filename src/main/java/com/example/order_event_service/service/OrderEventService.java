@@ -3,6 +3,7 @@ package com.example.order_event_service.service;
 import com.example.order_event_service.domain.OrderStatus;
 import com.example.order_event_service.dto.OrderRequestDto;
 import com.example.order_event_service.entity.OrderEvent;
+import com.example.order_event_service.exception.InvalidOrderStatusTransitionException;
 import com.example.order_event_service.mapper.OrderEventMapper;
 import com.example.order_event_service.notification.EmailNotificationService;
 import com.example.order_event_service.repository.OrderEventRepository;
@@ -46,7 +47,6 @@ public class OrderEventService {
         );
     }
 
-
     @Transactional
     public void markOrderAsPackedAndShipped(String shipmentNumber) {
 
@@ -59,7 +59,7 @@ public class OrderEventService {
 
         OrderEvent event = repository.findByShipmentNumber(shipmentNumber)
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new InvalidOrderStatusTransitionException(
                                 "Order not found for shipmentNumber=" + shipmentNumber
                         )
                 );
@@ -76,7 +76,6 @@ public class OrderEventService {
             return;
         }
 
-
         event.setStatusCode(OrderStatus.PACKED_AND_SHIPPED.getCode());
         repository.save(event);
 
@@ -88,6 +87,51 @@ public class OrderEventService {
                 previousStatus,
                 event.getStatusCode(),
                 OrderStatus.PACKED_AND_SHIPPED
+        );
+    }
+
+    @Transactional
+    public void markOrderAsOutForDelivery(String shipmentNumber) {
+
+        log.info(
+                "Processing order status change [shipmentNumber={}, newStatus={}, code={}]",
+                shipmentNumber,
+                OrderStatus.OUT_FOR_DELIVERY,
+                OrderStatus.OUT_FOR_DELIVERY.getCode()
+        );
+
+        OrderEvent event = repository.findByShipmentNumber(shipmentNumber)
+                .orElseThrow(() ->
+                        new InvalidOrderStatusTransitionException(
+                                "Order not found for shipmentNumber=" + shipmentNumber
+                        )
+                );
+
+        int previousStatus = event.getStatusCode();
+
+        if (previousStatus != OrderStatus.PACKED_AND_SHIPPED.getCode()) {
+            log.warn(
+                    "Invalid order status transition blocked [shipmentNumber={}, currentStatusCode={}, requiredStatusCode={}]",
+                    shipmentNumber,
+                    previousStatus,
+                    OrderStatus.PACKED_AND_SHIPPED.getCode()
+            );
+            throw new InvalidOrderStatusTransitionException(
+                    "Order must be PACKED_AND_SHIPPED before OUT_FOR_DELIVERY"
+            );
+        }
+
+        event.setStatusCode(OrderStatus.OUT_FOR_DELIVERY.getCode());
+        repository.save(event);
+
+        emailNotificationService.sendOrderOutForDeliveryNotification(event);
+
+        log.info(
+                "Order status updated successfully [shipmentNumber={}, oldStatusCode={}, newStatusCode={}, enum={}]",
+                shipmentNumber,
+                previousStatus,
+                event.getStatusCode(),
+                OrderStatus.OUT_FOR_DELIVERY
         );
     }
 }
