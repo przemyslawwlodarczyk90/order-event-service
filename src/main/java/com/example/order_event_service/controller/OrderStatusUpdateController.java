@@ -1,7 +1,7 @@
 package com.example.order_event_service.controller;
 
 import com.example.order_event_service.domain.OrderStatus;
-import com.example.order_event_service.service.OrderEventService;
+import com.example.order_event_service.service.OrderEventFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +14,9 @@ public class OrderStatusUpdateController {
     private static final Logger log =
             LoggerFactory.getLogger(OrderStatusUpdateController.class);
 
-    private final OrderEventService service;
+    private final OrderEventFacade service;
 
-    public OrderStatusUpdateController(OrderEventService service) {
+    public OrderStatusUpdateController(OrderEventFacade service) {
         this.service = service;
     }
 
