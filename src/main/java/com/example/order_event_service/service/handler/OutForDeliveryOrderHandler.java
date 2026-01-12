@@ -27,27 +27,32 @@ public class OutForDeliveryOrderHandler {
 
     public OrderEvent handle(String shipmentNumber) {
 
-        OrderEvent event = validator.validateOrderExists(
+        OrderEvent lastEvent = validator.validateOrderExists(
                 shipmentNumber,
-                repository.findByShipmentNumber(shipmentNumber)
+                repository.findTopByShipmentNumberOrderByReceivedAtDesc(shipmentNumber)
         );
 
-        int previousStatus = event.getStatusCode();
+        int previousStatus = lastEvent.getStatusCode();
 
         validator.validateCanBeOutForDelivery(shipmentNumber, previousStatus);
 
-        event.setStatusCode(OrderStatus.OUT_FOR_DELIVERY.getCode());
-        repository.save(event);
+        OrderEvent newEvent = new OrderEvent();
+        newEvent.setShipmentNumber(lastEvent.getShipmentNumber());
+        newEvent.setRecipientEmail(lastEvent.getRecipientEmail());
+        newEvent.setRecipientCountryCode(lastEvent.getRecipientCountryCode());
+        newEvent.setSenderCountryCode(lastEvent.getSenderCountryCode());
+        newEvent.setStatusCode(OrderStatus.OUT_FOR_DELIVERY.getCode());
+
+        repository.save(newEvent);
 
         log.info(
-                "Order status updated successfully [shipmentNumber={}, oldStatusCode={}, newStatusCode={}, enum={}]",
+                "Order status appended successfully [shipmentNumber={}, oldStatusCode={}, newStatusCode={}, enum={}]",
                 shipmentNumber,
                 previousStatus,
-                event.getStatusCode(),
+                newEvent.getStatusCode(),
                 OrderStatus.OUT_FOR_DELIVERY
         );
 
-        return event;
+        return newEvent;
     }
 }
-

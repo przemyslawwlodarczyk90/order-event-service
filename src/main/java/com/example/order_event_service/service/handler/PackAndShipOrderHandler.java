@@ -27,31 +27,37 @@ public class PackAndShipOrderHandler {
 
     public OrderEvent handle(String shipmentNumber) {
 
-        OrderEvent event = validator.validateOrderExists(
+        OrderEvent lastEvent = validator.validateOrderExists(
                 shipmentNumber,
-                repository.findByShipmentNumber(shipmentNumber)
+                repository.findTopByShipmentNumberOrderByReceivedAtDesc(shipmentNumber)
         );
 
-        int previousStatus = event.getStatusCode();
+        int previousStatus = lastEvent.getStatusCode();
 
         if (validator.validateAlreadyPackedAndShipped(
                 shipmentNumber,
                 previousStatus
         )) {
-            return event;
+            return lastEvent;
         }
 
-        event.setStatusCode(OrderStatus.PACKED_AND_SHIPPED.getCode());
-        repository.save(event);
+        OrderEvent newEvent = new OrderEvent();
+        newEvent.setShipmentNumber(lastEvent.getShipmentNumber());
+        newEvent.setRecipientEmail(lastEvent.getRecipientEmail());
+        newEvent.setRecipientCountryCode(lastEvent.getRecipientCountryCode());
+        newEvent.setSenderCountryCode(lastEvent.getSenderCountryCode());
+        newEvent.setStatusCode(OrderStatus.PACKED_AND_SHIPPED.getCode());
+
+        repository.save(newEvent);
 
         log.info(
-                "Order status updated successfully [shipmentNumber={}, oldStatusCode={}, newStatusCode={}, enum={}]",
+                "Order status appended successfully [shipmentNumber={}, oldStatusCode={}, newStatusCode={}, enum={}]",
                 shipmentNumber,
                 previousStatus,
-                event.getStatusCode(),
+                newEvent.getStatusCode(),
                 OrderStatus.PACKED_AND_SHIPPED
         );
 
-        return event;
+        return newEvent;
     }
 }

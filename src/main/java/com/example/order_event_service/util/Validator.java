@@ -3,6 +3,7 @@ package com.example.order_event_service.util;
 import com.example.order_event_service.domain.OrderStatus;
 import com.example.order_event_service.entity.OrderEvent;
 import com.example.order_event_service.exception.InvalidOrderStatusTransitionException;
+import com.example.order_event_service.exception.OrderNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,9 @@ public class Validator {
 
     /**
      * Walidacja: event nie może już istnieć
+     *
+     * Uwaga: w modelu append-only audit ta walidacja docelowo znika,
+     * ale zostawiamy ją na ten moment, jeśli jeszcze używasz jej w POST.
      */
     public void validateOrderDoesNotExist(String shipmentNumber,
                                           Optional<OrderEvent> existingEvent) {
@@ -65,7 +69,7 @@ public class Validator {
                     "validator - order not found [shipmentNumber={}]",
                     shipmentNumber
             );
-            return new InvalidOrderStatusTransitionException(
+            return new OrderNotFoundException(
                     "Order not found for shipmentNumber=" + shipmentNumber
             );
         });
