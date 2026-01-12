@@ -3,11 +3,12 @@ package com.example.order_event_service.service;
 import com.example.order_event_service.dto.OrderRequestDto;
 import com.example.order_event_service.entity.OrderEvent;
 import com.example.order_event_service.notification.EmailNotificationFacade;
-import com.example.order_event_service.service.handler.CreateOrderEventHandler;
-import com.example.order_event_service.service.handler.OutForDeliveryOrderHandler;
-import com.example.order_event_service.service.handler.PackAndShipOrderHandler;
+import com.example.order_event_service.service.handler.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OrderEventFacade {
@@ -16,17 +17,23 @@ public class OrderEventFacade {
     private final PackAndShipOrderHandler packHandler;
     private final OutForDeliveryOrderHandler outForDeliveryHandler;
     private final EmailNotificationFacade notificationFacade;
+    private final GetOrderEventsHandler getOrderEventsHandler;
+    private final GetAllOrderEventsHandler getAllOrderEventsHandler;
 
     public OrderEventFacade(
             CreateOrderEventHandler createHandler,
             PackAndShipOrderHandler packHandler,
             OutForDeliveryOrderHandler outForDeliveryHandler,
-            EmailNotificationFacade notificationFacade
+            EmailNotificationFacade notificationFacade,
+            GetOrderEventsHandler getOrderEventsHandler,
+            GetAllOrderEventsHandler getAllOrderEventsHandler
     ) {
         this.createHandler = createHandler;
         this.packHandler = packHandler;
         this.outForDeliveryHandler = outForDeliveryHandler;
         this.notificationFacade = notificationFacade;
+        this.getOrderEventsHandler = getOrderEventsHandler;
+        this.getAllOrderEventsHandler = getAllOrderEventsHandler;
     }
 
     public void processOrderEvent(OrderRequestDto request) {
@@ -36,13 +43,23 @@ public class OrderEventFacade {
 
     @Transactional
     public void markOrderAsPackedAndShipped(String shipmentNumber) {
-        OrderEvent event = packHandler.handle(shipmentNumber);
-        notificationFacade.sendPackedAndShipped(event);
+        Optional<OrderEvent> event = packHandler.handle(shipmentNumber);
+
+        event.ifPresent(notificationFacade::sendPackedAndShipped);
     }
 
     @Transactional
     public void markOrderAsOutForDelivery(String shipmentNumber) {
-        OrderEvent event = outForDeliveryHandler.handle(shipmentNumber);
-        notificationFacade.sendOutForDelivery(event);
+        Optional<OrderEvent> event = outForDeliveryHandler.handle(shipmentNumber);
+
+        event.ifPresent(notificationFacade::sendOutForDelivery);
+    }
+
+    public List<OrderEvent> getOrderEvents(String shipmentNumber) {
+        return getOrderEventsHandler.handle(shipmentNumber);
+    }
+
+    public List<OrderEvent> getAllOrderEvents() {
+        return getAllOrderEventsHandler.handle();
     }
 }

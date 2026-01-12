@@ -18,6 +18,10 @@ public interface OrderEventRepository extends JpaRepository<OrderEvent, Long> {
 
     List<OrderEvent> findAllByShipmentNumberOrderByReceivedAtAsc(
             String shipmentNumber
+
+
     );
+
+
 
 }

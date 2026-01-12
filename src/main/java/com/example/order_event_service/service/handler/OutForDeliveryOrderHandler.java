@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class OutForDeliveryOrderHandler {
 
@@ -25,7 +27,7 @@ public class OutForDeliveryOrderHandler {
         this.validator = validator;
     }
 
-    public OrderEvent handle(String shipmentNumber) {
+    public Optional<OrderEvent> handle(String shipmentNumber) {
 
         OrderEvent lastEvent = validator.validateOrderExists(
                 shipmentNumber,
@@ -34,7 +36,11 @@ public class OutForDeliveryOrderHandler {
 
         int previousStatus = lastEvent.getStatusCode();
 
-        validator.validateCanBeOutForDelivery(shipmentNumber, previousStatus);
+        // sprawdzam ostatni event; brak INSERT jeśli status już ustawiony
+        validator.validateCanBeOutForDelivery(
+                shipmentNumber,
+                previousStatus
+        );
 
         OrderEvent newEvent = new OrderEvent();
         newEvent.setShipmentNumber(lastEvent.getShipmentNumber());
@@ -53,6 +59,6 @@ public class OutForDeliveryOrderHandler {
                 OrderStatus.OUT_FOR_DELIVERY
         );
 
-        return newEvent;
+        return Optional.of(newEvent);
     }
 }

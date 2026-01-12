@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class PackAndShipOrderHandler {
 
@@ -25,7 +27,7 @@ public class PackAndShipOrderHandler {
         this.validator = validator;
     }
 
-    public OrderEvent handle(String shipmentNumber) {
+    public Optional<OrderEvent> handle(String shipmentNumber) {
 
         OrderEvent lastEvent = validator.validateOrderExists(
                 shipmentNumber,
@@ -34,11 +36,12 @@ public class PackAndShipOrderHandler {
 
         int previousStatus = lastEvent.getStatusCode();
 
+        // sprawdzam ostatni event; brak INSERT jeśli status już ustawiony
         if (validator.validateAlreadyPackedAndShipped(
                 shipmentNumber,
                 previousStatus
         )) {
-            return lastEvent;
+            return Optional.empty();
         }
 
         OrderEvent newEvent = new OrderEvent();
@@ -58,6 +61,6 @@ public class PackAndShipOrderHandler {
                 OrderStatus.PACKED_AND_SHIPPED
         );
 
-        return newEvent;
+        return Optional.of(newEvent);
     }
 }
