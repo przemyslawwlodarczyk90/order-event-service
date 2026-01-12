@@ -1,6 +1,7 @@
 package com.example.order_event_service.service;
 
 import com.example.order_event_service.dto.OrderRequestDto;
+import com.example.order_event_service.dto.OrderStatusUpdateDto;
 import com.example.order_event_service.entity.OrderEvent;
 import com.example.order_event_service.notification.EmailNotificationFacade;
 import com.example.order_event_service.service.handler.*;
@@ -54,6 +55,23 @@ public class OrderEventFacade {
 
         event.ifPresent(notificationFacade::sendOutForDelivery);
     }
+
+    public void processStatusUpdate(OrderStatusUpdateDto event) {
+
+        switch (event.getStatus()) {
+            case PACKED_AND_SHIPPED ->
+                    markOrderAsPackedAndShipped(event.getShipmentNumber());
+
+            case OUT_FOR_DELIVERY ->
+                    markOrderAsOutForDelivery(event.getShipmentNumber());
+
+            default ->
+                    throw new IllegalStateException(
+                            "Unsupported status: " + event.getStatus()
+                    );
+        }
+    }
+
 
     public List<OrderEvent> getOrderEvents(String shipmentNumber) {
         return getOrderEventsHandler.handle(shipmentNumber);
