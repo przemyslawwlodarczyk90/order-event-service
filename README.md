@@ -7,7 +7,8 @@ Skalowalna aplikacja do obsługi masowych zdarzeń zamówień z e-commerce
 
 ## 🎯 Realizacja Wymagań Zadania
 
-### ✅ Functional Requirements
+
+### ✅ Wymagania Funkcjonalne
 
 | Wymaganie | Status | Implementacja |
 |-----------|--------|---------------|
@@ -16,7 +17,8 @@ Skalowalna aplikacja do obsługi masowych zdarzeń zamówień z e-commerce
 | Mock wysyłki e-mail | ✅ | Dedykowane handlery z logowaniem pełnej treści wiadomości |
 | Kontrola wydajności | ✅ | Runtime settings w bazie danych (bez restartu aplikacji) |
 
-### ✅ Technical Requirements
+
+### ✅ Wymagania Techniczne
 
 | Technologia | Wersja | Zastosowanie |
 |-------------|--------|--------------|
@@ -40,6 +42,16 @@ Skalowalna aplikacja do obsługi masowych zdarzeń zamówień z e-commerce
 - Docker
 - JUnit 5
 - Mockito
+
+---
+
+## 🧭 Diagram Architektury
+
+📐 **Pełny diagram architektury aplikacji (Mermaid):**  
+👉 https://github.com/przemyslawwlodarczyk90/order-event-service/blob/master/diagramAplikacji.md
+
+ℹ️ Diagram jest zapisany w formacie **Mermaid** – kod źródłowy można skopiować i uruchomić w trybie pełnoekranowym np. w **https://mermaid.live** (obsługa zoomu i eksport do SVG/PNG).
+
 
 ---
 
@@ -99,7 +111,7 @@ public ResponseEntity<Void> receiveOrderEvent(@Valid @RequestBody OrderRequestDt
 
 ---
 
-### 2️⃣ Append-Only Audit Log
+### 2️⃣ Append-Only  Audit Log
 
 Każda zmiana statusu zamówienia = **nowy rekord** w bazie. Brak UPDATE - tylko INSERT.
 
@@ -150,7 +162,7 @@ catch (Exception ex) {
 
 ---
 
-### 4️⃣ Runtime Performance Management
+### 4️⃣ Zarządzanie Wydajnością - Runtime
 
 **Parametry dostępne w `/api/admin/settings`:**
 
@@ -235,7 +247,7 @@ void shouldCreateOrderEvent_whenValidRequest() {
 
 ---
 
-## 📋 API Endpoints
+## 📋 API - Endpointy
 
 ### 1. Przyjmowanie Nowego Zamówienia
 ```http
