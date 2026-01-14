@@ -20,7 +20,7 @@ Skalowalna aplikacja do obsługi masowych zdarzeń zamówień z e-commerce
 
 ### ✅ Wymagania Techniczne
 
-| Technologia | Wersja | Zastosowanie |
+| Technologia | Wersja | Zastosowanie |d
 |-------------|--------|--------------|
 | Java | 17 | Backend aplikacji |
 | Spring Boot | 3.x | Framework webowy + Kafka integration |
@@ -350,6 +350,92 @@ curl -X POST http://localhost:8080/api/orders \
     "statusCode": 10
   }'
 ```
+
+## ▶️ Jak przetestować aplikację
+
+Projekt można przetestować lokalnie bez dodatkowej konfiguracji środowiska.
+
+### Krok 1: Sklonuj repozytorium
+```bash
+git clone https://github.com/przemyslawwlodarczyk90/order-event-service.git
+cd order-event-service
+```
+
+### Krok 2: Uruchom infrastrukturę przez Docker Compose
+```bash
+docker-compose up -d
+```
+
+Docker Compose uruchamia:
+- **PostgreSQL** (port 5432)
+- **Zookeeper** (port 2181)
+- **Kafka** (port 9092)
+
+### Krok 3: Uruchom aplikację Spring Boot
+
+Otwórz projekt w **IntelliJ IDEA** i uruchom klasę główną:
+```java
+@SpringBootApplication
+public class OrderEventServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(OrderEventServiceApplication.class, args);
+    }
+}
+```
+
+Alternatywnie z terminala:
+```bash
+./mvnw spring-boot:run
+```
+
+### Krok 4: Testuj API przez Swagger UI
+
+Po starcie aplikacji API jest dostępne przez Swagger UI:
+```
+http://localhost:8080/swagger-ui.html
+```
+
+Testowanie polega na wysyłaniu requestów REST (POST / PATCH / GET) bezpośrednio z poziomu Swaggera.
+
+Każde żądanie tworzy event, który jest asynchronicznie przetwarzany przez Kafkę i zapisywany w bazie danych jako audit log.
+
+**Nie jest wymagane ręczne konfigurowanie Kafki ani bazy danych** — wszystko jest gotowe w Docker Compose.
+
+---
+
+## 📈 Skalowanie i wydajność 
+
+Aplikacja została zaprojektowana w sposób event-driven, dzięki czemu może obsługiwać większy ruch bez zmiany logiki biznesowej.
+
+
+### Skalowanie przetwarzania
+
+
+Przetwarzanie zamówień odbywa się asynchronicznie przez Apache Kafka.
+
+Liczbę zdarzeń przetwarzanych równolegle można regulować w trakcie działania aplikacji (runtime).
+
+Zmiana ustawień nie wymaga restartu ani redeployu serwisu.
+
+### Kontrola obciążenia
+
+
+Aplikacja posiada centralne ustawienia wydajności zapisywane w bazie danych.
+
+Ustawienia te pozwalają dostosować tempo przetwarzania eventów do aktualnego obciążenia systemu.
+
+Dzięki temu możliwa jest reakcja na wzrost lub spadek ruchu bez ingerencji w kod.
+
+### Rozbudowa funkcjonalna
+
+
+Logika aplikacji jest podzielona na małe, niezależne komponenty (fasady + handlery).
+
+Dodanie nowego typu zdarzenia lub kolejnego kroku przetwarzania nie wymaga modyfikacji istniejących elementów.
+
+Ułatwia to dalszy rozwój aplikacji i dostosowanie jej do nowych wymagań biznesowych.
+
+---
 
 ---
 
